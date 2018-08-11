@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="canvas" width="400" height="400" style="background-color:rgb(179, 178, 178)">
+</canvas>
+
+<script>
+    
+    // Native
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    var radius = canvas.height / 2;
+    ctx.translate(radius, radius);
+    radius = radius * 0.90
+    
+    function drawRuleBgSegment(startAngle, endAngle, color) {
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, startAngle, endAngle, false);
+        ctx.lineWidth = valueBgWidth;   
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    }
+
+    function drawText(text, point) {
+        ctx.font = radius*0.15 + "px arial";
+        ctx.textBaseline="middle";
+        ctx.textAlign="center";
+        ctx.fillText(text, point.x, point.y);
+    }
+
+    function drawLine(point1, point2, lineWidth, color) {
+        ctx.beginPath();
+        ctx.moveTo(point1.x,point1.y);
+        ctx.lineTo(point2.x,point2.y);
+        ctx.strokeStyle = color || 'black';
+        ctx.lineCap = "round";
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+    }
+
+    // Input
+    var minValue = 0; // >=
+    var maxValue = 100; // <=
+    var valueBg = [0, 50, 90, 100];
+    var valueBgColor = ['green', 'yellow', 'red'];
+    var valueBgWidth = 30;
+    var valueDistance = 10;
+    var currentValue = 25;
+
+    // Function
+    drawGauge();
+    function drawGauge() {
+        drawRuleBg();
+        drawRuleValue();
+        drawCurrentValue();
+    }
+
+    function drawRuleBg() {
+        for (let index = 1; index < valueBg.length; index++) {
+            const startValue = valueBg[index - 1];
+            const endValue = valueBg[index];
+            const color = valueBgColor[index - 1];
+            const startAngle = valueToAngle(startValue);
+            const endAngle = valueToAngle(endValue);
+            drawRuleBgSegment(startAngle, endAngle, color);
+        }
+    }
+
+    function valueToAngle(value) {
+        var range = maxValue - minValue;
+        var angle = (value - minValue) * Math.PI * 1.5 / range;
+        return angle  + Math.PI * 3/4;
+    }
+
+    function drawRuleValue() {
+        var array = [];
+        var value = minValue;
+        while (value <= maxValue) {
+            array.push(value);
+            drawRuleValueSegment(value);
+            value += valueDistance;
+        }
+        if (maxValue % valueDistance != 0) {
+            array.push(maxValue);
+            drawRuleValueSegment(maxValue);
+        }
+        for (let index = 1; index < array.length; index++) {
+            drawRuleValueSegmentChild(array[index - 1], array[index]);
+        }
+    }
+
+    function angleToPosition(angle, radius) {
+        var point = {};
+        point.x = radius * Math.cos(angle);
+        point.y = radius * Math.sin(angle);
+        return point;
+    }
+
+    function drawRuleValueSegment(value) {
+        var angle = valueToAngle(value);
+        var pointText = angleToPosition(angle, radius - valueBgWidth - 10);
+        drawText(value.toString(), pointText);
+
+        var pointRule1 = angleToPosition(angle, radius + valueBgWidth/2);
+        var pointrule2 = angleToPosition(angle, radius - valueBgWidth/2);
+        drawLine(pointRule1, pointrule2, 3);
+    }
+
+    function drawRuleValueSegmentChild(value1, value2) {
+        var childDistance = valueDistance / 4;
+        var value = value1 + childDistance;
+        while (value < value2) {
+            var angle = valueToAngle(value);
+            var pointRule1 = angleToPosition(angle, radius + valueBgWidth/2);
+            var pointrule2 = angleToPosition(angle, radius);
+            drawLine(pointRule1, pointrule2, 1);
+            value += childDistance;
+        }
+    }
+
+    function drawCurrentValue() {
+        var angle = valueToAngle(currentValue);
+        var pointRule1 = {x: 0, y: 0};
+        var pointrule2 = angleToPosition(angle, radius / 2);
+        drawLine(pointRule1, pointrule2, 10, 'orange');
+    }
+    
+</script>
+
+</body>
+</html>
